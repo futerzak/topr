@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block head %}
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.16.0/css/ol.css" type="text/css">
+    <script src="http://openlayers.org/en/v3.16.0/build/ol.js"></script>
+{% endblock %}
+{% block body %}
+    <div class="row">
+		<div id="map" class="map col-md-8" style="height: 750px;"></div>
+        <div class="col-md-4" id="tourists"></div>
+    </div>
+    {% include 'js/tourist_react.html' %}
+	{% include 'map.html' %}
+{% endblock %}

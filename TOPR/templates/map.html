@@ -1,0 +1,84 @@
+{% load l10n %}
+<script>
+$(document).ready(function() {
+var last_layer;
+var last_bear;
+function reloadLayer(map) {
+
+	var tourists = new ol.layer.Vector({
+		source: new ol.source.Vector({
+			url: '{% url 'api_get_tourists' %}',
+			format: new ol.format.KML()
+		})
+	});
+    var bears = new ol.layer.Vector({
+		source: new ol.source.Vector({
+			url: '{% url 'api_get_bears' %}',
+			format: new ol.format.KML()
+		})
+	});
+    map.addLayer(tourists);
+    map.addLayer(bears);
+	map.removeLayer(last_layer);
+    map.removeLayer(last_bear);
+	last_layer = tourists;
+    last_bear = bears;
+}
+
+var projection = ol.proj.get('EPSG:3857');
+
+var raster = new ol.layer.Tile({
+	source: new ol.source.BingMaps({
+		imagerySet: 'AerialWithLabels',
+		key: 'AkGbxXx6tDWf1swIhPJyoAVp06H0s0gDTYslNWWHZ6RoPqMpB9ld5FY1WutX8UoF'
+	})
+});
+
+var vector = new ol.layer.Vector({
+	source: new ol.source.Vector({
+		url: '{% url 'api_get_routes' %}',
+		format: new ol.format.KML()
+	})
+});
+
+
+var map = new ol.Map({
+	layers: [raster, vector],
+	target: document.getElementById('map'),
+	view: new ol.View({
+		center: [2176668.590591357, 6377294.143888826],
+		projection: projection,
+		zoom: 13
+	})
+});
+window.setInterval(reloadLayer, 5000, map);
+
+var drawCircleInMeter = function(map, radius, lon, lat) {
+        var view = map.getView();
+        var projection = view.getProjection();
+        var resolutionAtEquator = view.getResolution();
+        var center = ol.proj.transform([lon, lat], 'EPSG:4326','EPSG:3857');
+        var pointResolution = projection.getPointResolution(resolutionAtEquator, center);
+        var resolutionFactor = resolutionAtEquator/pointResolution;
+        var radius = (radius / ol.proj.METERS_PER_UNIT.m) * resolutionFactor;
+
+
+        var circle = new ol.geom.Circle(center, radius);
+        var circleFeature = new ol.Feature(circle);
+
+        // Source and vector layer
+        var vectorSource = new ol.source.Vector({
+            projection: 'EPSG:4326'
+        });
+        vectorSource.addFeature(circleFeature);
+        var vectorLayer = new ol.layer.Vector({
+            source: vectorSource
+        });
+
+        map.addLayer(vectorLayer);
+    }
+    {% for danger in danger_zones %}
+            drawCircleInMeter(map, {{ danger.promien }}, {{ danger.pozycja_N|unlocalize }}, {{ danger.pozycja_E|unlocalize }});
+    {% endfor %}
+    });
+</script>
